@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>復習ページ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+   
+
+    <script>
+        async function getAdvice() {
+            const loading = document.getElementById("advice-loading");
+            const adviceBox = document.getElementById("advice");
+
+            // 枠内ローディング表示
+            loading.style.display = "flex";
+            adviceBox.textContent = "";
+
+            try {
+                const res = await fetch("/advice", { method: "POST" });
+                const data = await res.json();
+
+                if (data.ok) {
+                    adviceBox.textContent = data.advice;
+                } else {
+                    adviceBox.textContent = "アドバイス生成に失敗しました。";
+                }
+            } catch (e) {
+                adviceBox.textContent = "通信エラーが発生しました。";
+            } finally {
+                // ローディング解除
+                loading.style.display = "none";
+            }
+        }
+        if (data.ok) {
+            adviceBox.innerHTML = formatAdvice(data.advice);
+        }
+        function formatAdvice(text) {
+    const lines = text.split("\n");
+    let html = "";
+
+    for (let rawLine of lines) {
+        const line = rawLine.trimStart(); // ← 行頭の空白を除去
+
+        // 大見出し（##）
+        if (line.startsWith("## ")) {
+            html += `<div class="advice-title">${line.replace(/^##\s+/, "")}</div>`;
+        }
+
+        // 中見出し（### / ####）
+        else if (line.startsWith("### ") || line.startsWith("#### ")) {
+            html += `<div class="advice-subtitle">${line.replace(/^#{3,4}\s+/, "")}</div>`;
+        }
+
+        // 箇条書き（* や **）
+        else if (line.startsWith("*")) {
+            html += `<div class="advice-item">${line.replace(/^\*+\s*/, "").replace(/\*\*/g, "")}</div>`;
+        }
+
+        // 区切り線（---）
+        else if (line.startsWith("---")) {
+            html += `<hr style="margin:16px 0;">`;
+        }
+
+        // 空行
+        else if (line.trim() === "") {
+            html += `<br>`;
+        }
+
+        // 通常本文
+        else {
+            html += `<div class="advice-block">${line.replace(/\*\*/g, "")}</div>`;
+        }
+    }
+
+    return html;
+}
+
+
+
+    </script>
+</head>
+
+<body>
+
+<div class="wrapper">
+    <div class="container">
+
+        <h1>復習ページ</h1>
+
+        <h2>要約</h2>
+        <p>間違い数: {{ analysis.wrong }} / {{ analysis.total }}</p>
+
+        {% if analysis.weak_slides %}
+            <p>弱点スライド: {{ analysis.weak_slides | join(", ") }}</p>
+        {% else %}
+            <p>参照スライド情報が十分ではありません。</p>
+        {% endif %}
+
+        <h2>問題別</h2>
+        <ul>
+            {% for q in question_list %}
+                <li>
+                    <strong>{{ loop.index }}.</strong>
+                    <div>問題: {{ q.question }}</div>
+                    <div>
+                        あなたの回答: {{ q.user_answer }}
+                        - {% if q.correct %}正解{% else %}不正解{% endif %}
+                    </div>
+
+                    <details>
+                        <summary>解説（クリックで表示）</summary>
+                        <pre>{{ q.explanation }}</pre>
+                        {% if q.ref_slides %}
+                            <div>参照スライド: {{ q.ref_slides | join(", ") }}</div>
+                        {% endif %}
+                    </details>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <h2>学習アドバイス（モデル生成）</h2>
+        <button onclick="getAdvice()">アドバイスを生成</button>
+
+        <!-- アドバイス表示枠 -->
+        <div id="advice-wrapper">
+            <pre id="advice"></pre>
+
+            <!-- 枠内ローディング -->
+            <div id="advice-loading">
+                <div class="spinner"></div>
+                <div>アドバイス生成中…</div>
+            </div>
+        </div>
+        <div class="back-area">
+            <a href="{{ url_for('result_page') }}" class="back-btn">
+                復習ページへ戻る
+            </a>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

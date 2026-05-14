@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>結果</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    
+</head>
+
+<body class="result-page">
+    <div class="result-container">
+        <h1 class="result-title">結果発表</h1>
+
+        <p class="score-text">
+            <span class="score">{{ score }}</span> / 5 問正解！
+        </p>
+
+
+        <div class="actions">
+            <a href="{{ url_for('index') }}" class="btn secondary retry-btn">もう一度挑戦する</a>
+            <!-- ここを review -> review_page に修正 -->
+            <a href="{{ url_for('review_page') }}" class="btn secondary">復習ページへ</a>
+            
+        </div>
+
+        <div id="adviceArea" style="max-width:900px; margin:20px auto 0;">
+            <div id="adviceStatus" style="text-align:center; color:#666; margin-top:12px;"></div>
+            <pre id="adviceBox" class="advice-box" style="display:none;"></pre>
+        </div>
+    </div>
+
+    <script>
+      const adviceBtn = document.getElementById('adviceBtn');
+      const adviceBox = document.getElementById('adviceBox');
+      const adviceStatus = document.getElementById('adviceStatus');
+
+      adviceBtn.addEventListener('click', async () => {
+        adviceBtn.disabled = true;
+        adviceStatus.textContent = 'アドバイスを生成しています…（数秒かかる場合があります）';
+        adviceBox.style.display = 'none';
+        adviceBox.textContent = '';
+
+        try {
+          const res = await fetch('/advice', { method: 'POST' });
+          const data = await res.json();
+          if (data.ok) {
+            adviceBox.textContent = data.advice || 'アドバイスが見つかりませんでした。';
+            adviceBox.style.display = 'block';
+            adviceStatus.textContent = '';
+          } else {
+            adviceStatus.textContent = data.message || 'アドバイスの生成に失敗しました。';
+          }
+        } catch (err) {
+          console.error(err);
+          adviceStatus.textContent = '通信エラーが発生しました。後でもう一度試してください。';
+        } finally {
+          adviceBtn.disabled = false;
+        }
+      });
+    </script>
+</body>
+</html>

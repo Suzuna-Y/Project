@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>生成されたクイズ</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+    
+</head>
+
+<body>
+    <h1>生成されたクイズ ({{ index }}/{{ total }})</h1>
+
+    <h2 class="question-box">
+        <div class="title">問題</div>
+        <div class="question-text">{{ question_data.question }}</div>
+    </h2>
+
+    <form id="answerForm" method="POST">
+        <input type="hidden" name="answer" id="answerInput" value="">
+
+        <div class="options">
+        {% for option in question_data.options[:4] %}
+            <button type="button"
+                    class="option-btn"
+                    data-label="{{ option[0] }}"
+                    onclick="selectOption(this)">
+                {{ option }}
+            </button>
+        {% endfor %}
+        </div>
+
+        <div id="result-box" class="explanation-box"></div>></div>
+
+        <div id="next-btn-container"
+             style="text-align: center; margin-top: 30px; display: none;">
+            {% if index < total %}
+                <button type="submit" class="next-btn">次の問題へ</button>
+            {% else %}
+                <button type="submit" class="next-btn">結果を見る</button>
+            {% endif %}
+        </div>
+    </form>
+
+    <script>
+        const correct = "{{ question_data.answer }}";
+        const explanationRaw = `{{ question_data.explanation | safe }}`;
+
+        function formatExplanation(text) {
+            let html = "";
+
+            // Aは / Bは / Cは / Dは で分割
+            const pattern = /(Aは|Bは|Cは|Dは)/g;
+            const parts = text.split(pattern);
+
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+
+                if (["Aは", "Bは", "Cは", "Dは"].includes(part)) {
+                    const label = part[0];
+                    const content = (parts[i + 1] || "").trim();
+                    const isCorrect = (label === correct);
+
+                    html += `
+                        <div class="choice-block ${isCorrect ? "correct" : "wrong"}">
+                            <div class="choice-title">【選択肢${label}】</div>
+                            <div>${content}</div>
+                        </div>
+                    `;
+                    i++;
+                } else if (part.trim() !== "") {
+                    html += `<div>${part}</div>`;
+                }
+            }
+
+            return html;
+        }
+
+        function selectOption(button) {
+            const selectedLabel = button.getAttribute("data-label");
+            const buttons = document.querySelectorAll(".option-btn");
+            const resultBox = document.getElementById("result-box");
+            const nextBtn = document.getElementById("next-btn-container");
+
+            buttons.forEach(btn => btn.disabled = true);
+
+            const isCorrect = (selectedLabel === correct);
+
+            if (isCorrect) {
+                button.classList.add("correct");
+                resultBox.innerHTML =
+                    "✅ <strong>正解！</strong><br><br>" +
+                    formatExplanation(explanationRaw);
+            } else {
+                button.classList.add("wrong");
+                buttons.forEach(btn => {
+                    if (btn.getAttribute("data-label") === correct) {
+                        btn.classList.add("correct");
+                    }
+                });
+                resultBox.innerHTML =
+                    "❌ <strong>不正解…</strong><br>" +
+                    "正解は「" + correct + "」です。<br><br>" +
+                    formatExplanation(explanationRaw);
+            }
+
+            document.getElementById("answerInput").value = selectedLabel;
+            nextBtn.style.display = "block";
+        }
+    </script>
+</body>
+</html>
