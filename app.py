@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 
 app = Flask(__name__)
-# セッションキーは環境変数で設定することを推奨（ここは開発用デフォルト）
+
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
 APP_STATE = {
@@ -20,7 +20,7 @@ APP_STATE = {
 }
 
 # ---------------- DEBUG: 環境変数キー検出（マスク表示） ----------------
-# もし .env を使うなら読み込む（python-dotenv がある場合）
+
 env_path = Path('.') / '.env'
 if env_path.exists():
     try:
@@ -44,7 +44,7 @@ if not found:
 else:
     API_KEY = found.get("GENAI_KEY") or found.get("GOOGLE_API_KEY") or next(iter(found.values()))
     print("使用する API キーを決定しました（マスク表示）:", (API_KEY[:4] + "..." + API_KEY[-4:]) if len(API_KEY) > 8 else API_KEY)
-    # 使いやすいように内部でもセットしておく（安全上の理由で実際の値は表示していません）
+    
     os.environ["__DETECTED_GENAI_KEY__"] = API_KEY
 
 # ---------------- GenAI: 遅延初期化 ----------------
@@ -81,7 +81,7 @@ def ensure_model():
         model = None
         return False
 
-# 簡易テスト（開発中のみ：起動時に一度だけ試す）
+
 
 # ---------------- ユーティリティ: スライド抽出（PPTX） ----------------
 def extract_slides_from_pptx_bytes(file_bytes):
@@ -171,7 +171,7 @@ def generate_quiz_from_slides(slides):
     """
     モデル呼び出しの堅牢化 + フォールバック。
     """
-    # 必要なら model を初期化
+ 
     if not ensure_model():
         print("モデル未利用フォールバック：モデル利用不可のため簡易クイズを使用します。")
         return simple_quiz_from_slides(slides)
@@ -262,7 +262,7 @@ def generate_quiz_from_slides(slides):
 def parse_quiz_text(response_text):
     questions = []
 
-    # 問題ブロック毎に分割（===問題1=== 等）
+    # 問題ブロック毎に分割
     blocks = re.split(r"===\s*問題\s*\d+\s*===", response_text)
     for block in blocks:
         block = block.strip()
@@ -519,5 +519,5 @@ def update_score():
 
 # ---------------- 実行 ----------------
 if __name__ == "__main__":
-    # 開発中は use_reloader=False を指定して一プロセスにすることもできます
+
     app.run(debug=False, use_reloader=False)
