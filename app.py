@@ -1,4 +1,4 @@
-# app.py (全文)
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import google.generativeai as genai
 from pptx import Presentation
@@ -19,12 +19,12 @@ APP_STATE = {
     "question_list": []
 }
 
-# ---------------- DEBUG: 環境変数キー検出（マスク表示） ----------------
+
 
 env_path = Path('.') / '.env'
 if env_path.exists():
     try:
-        from dotenv import load_dotenv  # type: ignore
+        from dotenv import load_dotenv  
         load_dotenv(dotenv_path=env_path)
         print("読み込み: .env ファイルを読み込みました。")
     except Exception:
@@ -47,7 +47,7 @@ else:
     
     os.environ["__DETECTED_GENAI_KEY__"] = API_KEY
 
-# ---------------- GenAI: 遅延初期化 ----------------
+
 
 
 model = None
@@ -69,7 +69,7 @@ def ensure_model():
 
     try:
         genai.configure(api_key=API_KEY)
-        # 毎回 fresh な model を作る
+
         model = genai.GenerativeModel(
             model_name="models/gemini-2.5-flash"
         )
@@ -83,7 +83,6 @@ def ensure_model():
 
 
 
-# ---------------- ユーティリティ: スライド抽出（PPTX） ----------------
 def extract_slides_from_pptx_bytes(file_bytes):
     prs = Presentation(io.BytesIO(file_bytes))
     slides = []
@@ -120,7 +119,7 @@ def extract_slides_from_pptx_bytes(file_bytes):
         })
     return slides
 
-# ---------------- ユーティリティ: PDF 抽出 ----------------
+
 def extract_pages_from_pdf_bytes(file_bytes):
     slides = []
     with fitz.open(stream=file_bytes, filetype="pdf") as doc:
@@ -142,7 +141,6 @@ def extract_pages_from_pdf_bytes(file_bytes):
             })
     return slides
 
-# ---------------- フォールバック：簡易クイズ生成 ----------------
 def simple_quiz_from_slides(slides, n_questions=5):
     def first_sentence(text):
         s = (text or "").strip().split("\n")[0]
@@ -166,7 +164,6 @@ def simple_quiz_from_slides(slides, n_questions=5):
         out.append(f"===問題{i+1}===\n【問題文】\n{qtext}\n【選択肢】\nA. {opts[0]}\nB. {opts[1]}\nC. {opts[2]}\nD. {opts[3]}\n【正解】\nA\n【解説】\n参照スライド：スライド {s.get('index')}（タイトル：'{s.get('title')}'), 該当箇所：'{first_sentence(s.get('text') or s.get('title') or '')}'\n")
     return "\n".join(out)
 
-# ---------------- モデル呼び出し（堅牢化） ----------------
 def generate_quiz_from_slides(slides):
     """
     モデル呼び出しの堅牢化 + フォールバック。
@@ -235,7 +232,7 @@ def generate_quiz_from_slides(slides):
         return simple_quiz_from_slides(slides)
 
     try:
-        # 応答抽出の複数パス
+
         if getattr(response, "candidates", None):
             c0 = response.candidates[0]
             if getattr(c0, "content", None) and getattr(c0.content, "parts", None):
@@ -258,18 +255,17 @@ def generate_quiz_from_slides(slides):
         print(repr(e))
         return simple_quiz_from_slides(slides)
 
-# ---------------- 応答パース ----------------
+
 def parse_quiz_text(response_text):
     questions = []
 
-    # 問題ブロック毎に分割
+
     blocks = re.split(r"===\s*問題\s*\d+\s*===", response_text)
     for block in blocks:
         block = block.strip()
         if not block:
             continue
 
-        # 問題文
         m_q = re.search(r"【問題文】\s*(.*?)\s*【選択肢】", block, re.S)
         if not m_q:
             m_q = re.search(r"(?:問題文|問題)\s*[:：]?\s*(.*?)\s*(?:選択肢|A\.)", block, re.S)
@@ -277,7 +273,7 @@ def parse_quiz_text(response_text):
             continue
         question_text = m_q.group(1).strip()
 
-        # 選択肢
+
         m_opts = re.search(r"【選択肢】\s*(.*?)(?:\s*【正解】|\s*正解\s*:|\s*【解説】|\Z)", block, re.S)
         if not m_opts:
             continue
@@ -310,7 +306,6 @@ def parse_quiz_text(response_text):
 
     return questions
 
-# ---------------- 復習解析ユーティリティ ----------------
 def extract_referenced_slides_from_explanation(explanation_text):
     nums = re.findall(r"スライド\s*(\d+)", explanation_text)
     return sorted({int(n) for n in nums}) if nums else []
@@ -382,7 +377,6 @@ def heuristic_advice(analysis):
 
     return "\n".join(lines)
 
-# ---------------- ルーティング ----------------
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -517,7 +511,7 @@ def update_score():
         session["score"] = session.get("score", 0) + 1
     return jsonify({"score": session.get("score", 0)})
 
-# ---------------- 実行 ----------------
+
 if __name__ == "__main__":
 
     app.run(debug=False, use_reloader=False)

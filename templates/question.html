@@ -30,7 +30,7 @@
         {% endfor %}
         </div>
 
-        <div id="result-box" class="explanation-box"></div>></div>
+        <div id="result-box" class="explanation-box"></div>>
 
         <div id="next-btn-container"
              style="text-align: center; margin-top: 30px; display: none;">
@@ -43,13 +43,16 @@
     </form>
 
     <script>
-        const correct = "{{ question_data.answer }}";
-        const explanationRaw = `{{ question_data.explanation | safe }}`;
+        const quizData = {
+            correct: {{ question_data.answer | tojson }},
+            explanation: {{ question_data.explanation | tojson }}
+        };
 
+        const correct = quizData.correct;
+        const explanationRaw = quizData.explanation;
         function formatExplanation(text) {
             let html = "";
 
-            // Aは / Bは / Cは / Dは で分割
             const pattern = /(Aは|Bは|Cは|Dは)/g;
             const parts = text.split(pattern);
 

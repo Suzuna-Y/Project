@@ -18,7 +18,7 @@
 
         <div class="actions">
             <a href="{{ url_for('index') }}" class="btn secondary retry-btn">もう一度挑戦する</a>
-            <!-- ここを review -> review_page に修正 -->
+            
             <a href="{{ url_for('review_page') }}" class="btn secondary">復習ページへ</a>
             
         </div>
@@ -29,34 +29,6 @@
         </div>
     </div>
 
-    <script>
-      const adviceBtn = document.getElementById('adviceBtn');
-      const adviceBox = document.getElementById('adviceBox');
-      const adviceStatus = document.getElementById('adviceStatus');
-
-      adviceBtn.addEventListener('click', async () => {
-        adviceBtn.disabled = true;
-        adviceStatus.textContent = 'アドバイスを生成しています…（数秒かかる場合があります）';
-        adviceBox.style.display = 'none';
-        adviceBox.textContent = '';
-
-        try {
-          const res = await fetch('/advice', { method: 'POST' });
-          const data = await res.json();
-          if (data.ok) {
-            adviceBox.textContent = data.advice || 'アドバイスが見つかりませんでした。';
-            adviceBox.style.display = 'block';
-            adviceStatus.textContent = '';
-          } else {
-            adviceStatus.textContent = data.message || 'アドバイスの生成に失敗しました。';
-          }
-        } catch (err) {
-          console.error(err);
-          adviceStatus.textContent = '通信エラーが発生しました。後でもう一度試してください。';
-        } finally {
-          adviceBtn.disabled = false;
-        }
-      });
-    </script>
+    
 </body>
 </html>
